@@ -18,7 +18,6 @@ const fmt = (n: number) =>
 
 export function DashboardSidebar() {
   const { filters, setFilters, bounds, rows } = useAirbnb();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const toggle = (list: string[], v: string) =>
     list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
@@ -40,23 +39,7 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {nav.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link to={item.url} className="flex items-center gap-2">
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+
 
         <SidebarGroup>
           <SidebarGroupLabel className="flex items-center gap-2">
