@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, MapPinned, Users, SlidersHorizontal, Home } from "lucide-react";
+import { SlidersHorizontal, Home } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -8,20 +7,11 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { useAirbnb } from "@/lib/airbnb/context";
-
-const nav = [
-  { title: "Visão Geral", url: "/", icon: LayoutDashboard },
-  { title: "Bairros", url: "/bairros", icon: MapPinned },
-  { title: "Anfitriões", url: "/anfitrioes", icon: Users },
-];
 
 const fmt = (n: number) =>
   n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n.toFixed(0)}`;
