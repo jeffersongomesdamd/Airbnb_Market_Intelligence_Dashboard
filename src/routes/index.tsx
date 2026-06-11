@@ -9,6 +9,7 @@ import { NeighborhoodChart } from "@/components/dashboard/NeighborhoodChart";
 import { HostTable } from "@/components/dashboard/HostTable";
 import { DataError } from "@/components/dashboard/DataError";
 import { AIInsights } from "@/components/dashboard/AIInsights";
+import { SectionErrorBoundary } from "@/components/dashboard/SectionErrorBoundary";
 import {
   ChartSkeleton,
   MetricCardsSkeleton,
