@@ -32,13 +32,13 @@ function DashboardPage() {
   return (
     <AirbnbDataProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background">
+        <div className="flex min-h-screen w-full">
           <DashboardSidebar />
           <div className="flex w-full flex-1 flex-col">
-            <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur">
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-white/10 bg-background/40 px-4 backdrop-blur-xl">
               <SidebarTrigger />
               <div className="flex flex-col leading-tight">
-                <h1 className="text-sm font-semibold tracking-tight">
+                <h1 className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-sm font-semibold tracking-tight text-transparent">
                   Real Estate Market Intelligence
                 </h1>
                 <p className="text-[11px] text-muted-foreground">

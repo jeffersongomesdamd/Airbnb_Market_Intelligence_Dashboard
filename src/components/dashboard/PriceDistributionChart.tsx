@@ -51,30 +51,40 @@ export function PriceDistributionChart() {
           <AreaChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 4 }}>
             <defs>
               <linearGradient id="gradPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.55} />
-                <stop offset="60%" stopColor="var(--chart-2)" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="var(--chart-2)" stopOpacity={0.02} />
+                <stop offset="0%" stopColor="#d946ef" stopOpacity={0.6} />
+                <stop offset="60%" stopColor="#8b5cf6" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="strokePrice" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#ec4899" />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <CartesianGrid strokeDasharray="2 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
             <XAxis
               dataKey="bin"
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 11, fill: "rgba(255,255,255,0.55)" }}
               tickFormatter={(v) => `$${Math.round(v / 1000)}k`}
               tickMargin={6}
+              axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+              tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              tick={{ fontSize: 11, fill: "rgba(255,255,255,0.55)" }}
               width={36}
               tickMargin={4}
+              axisLine={false}
+              tickLine={false}
             />
             <Tooltip
-              cursor={{ stroke: "var(--chart-2)", strokeOpacity: 0.3 }}
+              cursor={{ stroke: "#ec4899", strokeOpacity: 0.4 }}
               contentStyle={{
-                background: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
+                background: "rgba(20, 16, 40, 0.85)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 10,
                 fontSize: 12,
+                color: "white",
               }}
               formatter={(v: number) => [v.toLocaleString(), "Listings"]}
               labelFormatter={(v) => `~${fmtUSD0(Number(v))}`}
@@ -82,7 +92,7 @@ export function PriceDistributionChart() {
             <Area
               type="monotone"
               dataKey="count"
-              stroke="var(--chart-1)"
+              stroke="url(#strokePrice)"
               fill="url(#gradPrice)"
               strokeWidth={2.5}
             />
