@@ -103,7 +103,9 @@ function DashboardBody() {
 
       <TabsContent value="hosts" className="space-y-6">
         <MetricCards />
-        <HostTable />
+        <SectionErrorBoundary fallbackTitle="Falha ao renderizar a tabela de hosts.">
+          <HostTable />
+        </SectionErrorBoundary>
       </TabsContent>
     </Tabs>
   );
