@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,8 +56,10 @@ export function HostTable() {
     }));
   }, [filtered]);
 
+  const debouncedQuery = useDebounce(query, 250);
+
   const filteredSorted = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     const arr = q
       ? hosts.filter(
           (h) => h.host_id.toLowerCase().includes(q) || h.host_name.toLowerCase().includes(q),
@@ -64,7 +67,7 @@ export function HostTable() {
       : hosts;
     const sign = sortDir === "asc" ? 1 : -1;
     return [...arr].sort((a, b) => (a[sortKey] - b[sortKey]) * sign);
-  }, [hosts, query, sortKey, sortDir]);
+  }, [hosts, debouncedQuery, sortKey, sortDir]);
 
   const pageCount = Math.max(1, Math.ceil(filteredSorted.length / PAGE_SIZE));
   const current = Math.min(page, pageCount - 1);
@@ -137,7 +140,13 @@ export function HostTable() {
                       <div className="text-xs text-muted-foreground">{h.host_id}</div>
                     </TableCell>
                     <TableCell className="tabular-nums">{h.listings}</TableCell>
-                    <TableCell className="tabular-nums">${h.avgCost.toFixed(0)}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {new Intl.NumberFormat("en-US", {
+                        style: "currency",
+                        currency: "USD",
+                        maximumFractionDigits: 0,
+                      }).format(h.avgCost)}
+                    </TableCell>
                     <TableCell className="tabular-nums">{h.avgAttr.toFixed(2)}</TableCell>
                     <TableCell className="tabular-nums font-semibold text-chart-2">
                       {h.fator_eficiencia.toFixed(4)}

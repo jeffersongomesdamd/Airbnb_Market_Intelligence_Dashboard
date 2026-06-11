@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AirbnbDataProvider, useAirbnb } from "@/lib/airbnb/context";
@@ -9,6 +8,12 @@ import { PriceDistributionChart } from "@/components/dashboard/PriceDistribution
 import { NeighborhoodChart } from "@/components/dashboard/NeighborhoodChart";
 import { HostTable } from "@/components/dashboard/HostTable";
 import { DataError } from "@/components/dashboard/DataError";
+import { AIInsight } from "@/components/dashboard/AIInsight";
+import {
+  ChartSkeleton,
+  MetricCardsSkeleton,
+  TableSkeleton,
+} from "@/components/dashboard/DashboardSkeleton";
 
 export const Route = createFileRoute("/")({
   head: () => ({
