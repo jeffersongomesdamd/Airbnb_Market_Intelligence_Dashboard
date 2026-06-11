@@ -2,33 +2,54 @@ import { z } from "zod";
 import type { AirbnbRow } from "@/types/airbnb";
 import { AIRBNB_DATA } from "./data";
 
-// ─── Schema Zod ────────────────────────────────────────────────────────────────
-// Aceita number | null | undefined e converte para um número seguro.
-const toFiniteNumber = (fallback: number) =>
-  z.preprocess(
-    (val) => (val === null || val === undefined || val === "" ? fallback : Number(val)),
-    z.number().finite(`Esperado número finito, recebido valor inválido`),
-  );
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+// Converte qualquer valor numérico (incluindo null/undefined/string) em número
+// finito. Se a conversão falhar, retorna `fallback`. Nunca propaga NaN.
+const toFiniteNumber = (fallback = 0) =>
+  z.preprocess((val) => {
+    if (val === null || val === undefined || val === "") return fallback;
+    const n = typeof val === "number" ? val : Number(val);
+    return Number.isFinite(n) ? n : fallback;
+  }, z.number().finite());
 
+// Converte qualquer valor em string segura (id numérico → "123").
+const toSafeString = (fallback = "") =>
+  z.preprocess((val) => {
+    if (val === null || val === undefined) return fallback;
+    return String(val);
+  }, z.string());
+
+// ─── Schema Zod alinhado ao formato real do dataset ───────────────────────────
 export const AirbnbRowSchema = z.object({
-  id: z.coerce.number().int().nonnegative(),
-  name: z.string().catch("(sem nome)"),
-  host_id: z.coerce.number().int().nonnegative(),
-  host_name: z.string().catch("(desconhecido)"),
-  neighbourhood_group: z.string().min(1),
-  neighbourhood: z.string().min(1),
-  latitude: toFiniteNumber(0),
-  longitude: toFiniteNumber(0),
-  room_type: z.string().min(1),
+  id: toSafeString("0"),
+  name: toSafeString("(sem nome)"),
+  host_id: toSafeString("0"),
+  host_name: z.preprocess(
+    (v) => (v === null || v === undefined ? null : String(v)),
+    z.string().nullable(),
+  ),
+  neighbourhood_group: toSafeString("Unknown"),
+  neighbourhood: toSafeString("Unknown"),
+  lat: toFiniteNumber(0),
+  long: toFiniteNumber(0),
+  room_type: toSafeString("Unknown"),
   price: toFiniteNumber(0),
-  minimum_nights: z.coerce.number().int().nonnegative().catch(1),
-  number_of_reviews: z.coerce.number().int().nonnegative().catch(0),
-  last_review: z.string().nullable().catch(null),
-  reviews_per_month: toFiniteNumber(0).catch(0),
-  calculated_host_listings_count: z.coerce.number().int().nonnegative().catch(1),
-  availability_365: z.coerce.number().int().min(0).max(365).catch(0),
-  // Campo derivado — calculado após parsing, não validado aqui
+  service_fee: toFiniteNumber(0),
+  minimum_nights: toFiniteNumber(1),
+  number_of_reviews: toFiniteNumber(0),
+  last_review: z.preprocess(
+    (v) => (v === null || v === undefined || v === "" ? null : String(v)),
+    z.string().nullable(),
+  ),
+  reviews_per_month: toFiniteNumber(0),
+  calculated_host_listings_count: toFiniteNumber(1),
+  availability_365: toFiniteNumber(0),
+  review_scores_rating: toFiniteNumber(0),
+  instant_bookable: z.preprocess((v) => Boolean(v), z.boolean()),
+  // Métricas derivadas (já calculadas no ETL Python)
   custo_real: toFiniteNumber(0),
+  taxa_atratividade: toFiniteNumber(0),
+  fator_eficiencia: toFiniteNumber(0),
 });
 
 export type ParsedAirbnbRow = z.infer<typeof AirbnbRowSchema>;
@@ -36,17 +57,18 @@ export type ParsedAirbnbRow = z.infer<typeof AirbnbRowSchema>;
 // ─── Resultado tipado do parse ─────────────────────────────────────────────────
 interface ParseResult {
   rows: AirbnbRow[];
-  skipped: number; // linhas rejeitadas
-  errors: string[]; // amostra dos erros (máx. 10) para observabilidade
+  skipped: number;
+  errors: string[];
 }
 
-// ─── Worker-safe: parse isolado por linha ─────────────────────────────────────
-function parseRow(raw: unknown, index: number): AirbnbRow | null {
+// ─── Parse isolado por linha ──────────────────────────────────────────────────
+function parseRow(raw: unknown, index: number): AirbnbRow {
   const result = AirbnbRowSchema.safeParse(raw);
   if (!result.success) {
-    // Retorna null; o chamador acumula o erro com contexto de linha
     const firstIssue = result.error.issues[0];
-    throw new Error(`[parse] Linha ${index}: campo "${firstIssue.path.join(".")}" — ${firstIssue.message}`);
+    throw new Error(
+      `[parse] Linha ${index}: campo "${firstIssue.path.join(".")}" — ${firstIssue.message}`,
+    );
   }
   return result.data as AirbnbRow;
 }
@@ -59,14 +81,11 @@ async function parseInChunks(raw: unknown[], chunkSize = 500): Promise<ParseResu
 
   for (let i = 0; i < raw.length; i += chunkSize) {
     const chunk = raw.slice(i, i + chunkSize);
-
-    // Cede o thread entre chunks (evita jank na UI)
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
     for (let j = 0; j < chunk.length; j++) {
       try {
-        const row = parseRow(chunk[j], i + j);
-        if (row) rows.push(row);
+        rows.push(parseRow(chunk[j], i + j));
       } catch (err) {
         skipped++;
         if (errors.length < 10) {
@@ -82,21 +101,19 @@ async function parseInChunks(raw: unknown[], chunkSize = 500): Promise<ParseResu
 // ─── Entry point ──────────────────────────────────────────────────────────────
 export async function loadAirbnbCSV(): Promise<ParseResult> {
   const MODULE = "[loadAirbnbCSV]";
-
   try {
     if (!Array.isArray(AIRBNB_DATA)) {
       throw new TypeError(`${MODULE} AIRBNB_DATA não é um array`);
     }
-
     const result = await parseInChunks(AIRBNB_DATA);
-
     if (result.skipped > 0) {
-      console.warn(`${MODULE} ${result.skipped} linha(s) ignorada(s) por erro de validação.`, result.errors);
+      console.warn(
+        `${MODULE} ${result.skipped} linha(s) ignorada(s) por erro de validação.`,
+        result.errors,
+      );
     }
-
     return result;
   } catch (err) {
-    // Re-lança com contexto claro para o consumidor (context.tsx)
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(`${MODULE} Falha ao carregar dados: ${message}`);
   }
