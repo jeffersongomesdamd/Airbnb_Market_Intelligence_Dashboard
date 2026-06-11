@@ -291,7 +291,89 @@ Definidos via `<defs><linearGradient>` dentro de cada chart Recharts:
 
 ---
 
-## 11. Como estender
+## 10b. Módulo de Insights (`AIInsights`)
+
+A camada de "Inteligência de Negócio" é **100% determinística e client-side** —
+nenhuma chamada a LLM, nenhum custo de inferência, nenhuma dependência de rede.
+Toda a lógica vive em `src/components/dashboard/AIInsights.tsx` e consome
+exclusivamente `filtered` exposto pelo `useAirbnb()`. Isso garante que os
+insights reagem em tempo real aos filtros do Sidebar (room type, group, slider
+de custo) sem precisar refazer requisições.
+
+### 10b.1 Pipeline de análise
+
+```text
+filtered (AirbnbRow[])
+    │
+    ├── aggregateByGroup(rows)      → GroupAgg[] { group, listings, avgCost, avgAttr, avgEff }
+    ├── aggregateByRoomType(rows)   → { type, share }[] ordenado desc
+    │
+    ▼
+buildInsights(rows) → Insight[]     // headline + eficiência + spread + volume
+    │
+    ▼
+useMemo([filtered])                 // recalcula só quando o filtro muda
+    │
+    ▼
+Renderização: grid responsivo de Cards (glass + gradiente por tom)
+```
+
+### 10b.2 Regras de geração (`buildInsights`)
+
+| Card           | Regra                                                                                  | Tom (cor) |
+| -------------- | -------------------------------------------------------------------------------------- | --------- |
+| **Headline**   | Compara o grupo de maior `avgCost` com o de maior `avgAttr`. Se coincidirem → narra "mercado dominado por um polo"; caso contrário → narra o descolamento entre preço e atratividade. | violet    |
+| **Eficiência** | Destaca o grupo com maior `avgEff` (fator de eficiência = atratividade/custo).         | cyan      |
+| **Spread**     | Só aparece quando `lowCost.group ≠ topCost.group`. Mostra o grupo mais barato e o spread (`topCost - lowCost`) como oportunidade de entrada. | amber     |
+| **Volume**     | Maior `listings` + share dominante de `room_type` em pt-BR.                            | pink      |
+
+Todas as strings são formatadas via `Intl.NumberFormat` (`fmtUSD`, `fmtNum`),
+respeitando a convenção do projeto (nunca concatenar `"$" + n`).
+
+### 10b.3 Estado vazio
+
+Quando `filtered.length === 0` (ou a agregação por grupo fica vazia),
+`buildInsights` retorna `[]` e o componente renderiza um único Card placeholder
+("Sem dados suficientes para gerar insights com os filtros atuais"), evitando
+seções colapsadas no layout.
+
+### 10b.4 Visual
+
+- Cabeçalho de seção com chip gradiente violeta→rosa + contador de insights.
+- Grid responsivo: `grid md:grid-cols-2 xl:grid-cols-4`.
+- Cada Card recebe um `tone` (violet / pink / cyan / amber) que mapeia para um
+  trio `(ring background, icon gradient, chip gradient)` no objeto `toneStyles`.
+  Adicionar um novo tom é trocar/estender essa lookup table.
+- "Blob" desfocado (`blur-3xl`) no canto superior direito de cada card,
+  consistente com o padrão visual dos `MetricCards`.
+
+### 10b.5 Como estender o módulo
+
+1. **Novo insight**: adicione uma nova função `aggregateByX(rows)` se precisar
+   de uma agregação que ainda não exista, depois acrescente um `insights.push({...})`
+   dentro de `buildInsights` com um `id` único, um `icon` (lucide-react), um
+   `tone` válido e `title` + `body` já formatados.
+2. **Nova métrica**: prefira derivá-la a partir de campos engineered já
+   presentes em `AirbnbRow` (`custo_real`, `taxa_atratividade`,
+   `fator_eficiencia`). Se precisar de algo novo, pré-compute no pipeline
+   Python e declare em `types/airbnb.ts` — nunca calcule fórmulas pesadas em
+   runtime aqui.
+3. **Novo tom de cor**: adicione uma entrada em `toneStyles` e amplie o union
+   `Insight["tone"]`. O TypeScript garante exaustividade.
+4. **Trocar para LLM no futuro**: substitua `buildInsights` por uma chamada a
+   um server function (`createServerFn`) que receba uma versão resumida das
+   agregações e devolva o array `Insight[]`. O componente não precisa mudar.
+
+### 10b.6 Performance
+
+- Uma única passagem `O(n)` sobre `filtered` por agregação (`Map`-based).
+- Tudo memoizado em `useMemo([filtered])` — zero recomputação durante scroll,
+  resize ou troca de aba.
+- Sem efeitos colaterais, sem `useEffect`, sem fetch — render puro.
+
+---
+
+
 
 - **Novo KPI**: adicione um item em `MetricCards.items` (calcule em `useMemo`
   sobre `filtered`).
