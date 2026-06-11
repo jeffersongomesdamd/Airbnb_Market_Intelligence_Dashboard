@@ -70,3 +70,10 @@ Essas três métricas são a base para todos os gráficos, KPIs e insights da ap
 - **Novos filtros**: estender `Filters` em `src/types/airbnb.ts` e a lógica de `filtered` em `context.tsx`.
 - **Novos charts**: seguir o padrão de `PriceDistributionChart` / `NeighborhoodChart` (gradient via `<defs>`, tooltip customizado, eixos suaves).
 - **Swap para LLM real**: substituir `buildInsights` por chamada a server function que consome o Lovable AI Gateway, mantendo a mesma interface `Insight[]`.
+
+## 7. Plano de Contingência de Dados (Data Resilience)
+
+- **Regra de Fallback:** Todo cálculo numérico (médias/somas) deve passar por uma checagem `isFinite()` ou fornecer um valor padrão `0`. Aplicado em `MetricCards`, `context.tsx` (`safeMinMax`, guard de `custo_real`) e nas agregações de `HostTable`.
+- **Prevenção de Crash:** Componentes de busca devem implementar `Error Boundaries` (ver `SectionErrorBoundary`) e checagens de existência (`optional chaining`, `String(...)` defensivo) para evitar acesso a propriedades de objetos `undefined`. A busca em `HostTable` coage `host_id` / `host_name` para string antes de qualquer `.toLowerCase()`.
+- **Monitoramento de Runtime:** Caso um valor numérico resulte em `NaN`, o sistema deve logar o `host_id` problemático com prefixo `[MODULE]` (ex: `[HostTable] NaN detectado para host_id=XYZ`) para facilitar o debug, ao invés de exibir `NaN` na UI — o fallback visível é sempre `0`.
+- **Observabilidade de parsing:** Erros não-fatais do `parseInChunks` são acumulados em `parseWarnings` no contexto e ficam disponíveis para surface na UI sem travar o boot do dashboard.
