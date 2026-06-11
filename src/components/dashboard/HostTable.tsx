@@ -37,22 +37,24 @@ export function HostTable() {
   const hosts = useMemo<HostAgg[]>(() => {
     const map = new Map<string, { name: string; n: number; cost: number; attr: number; eff: number }>();
     for (const r of filtered) {
-      const key = r.host_id || "unknown";
-      const a = map.get(key) ?? { name: r.host_name ?? "Unknown", n: 0, cost: 0, attr: 0, eff: 0 };
+      // Coerção defensiva: host_id pode vir como número de fontes externas
+      const key = r.host_id != null ? String(r.host_id) : "unknown";
+      const safeName = r.host_name ? String(r.host_name) : "Unknown";
+      const a = map.get(key) ?? { name: safeName, n: 0, cost: 0, attr: 0, eff: 0 };
       a.n += 1;
-      a.cost += r.custo_real;
-      a.attr += r.taxa_atratividade;
-      a.eff += r.fator_eficiencia;
-      if (!a.name || a.name === "Unknown") a.name = r.host_name ?? a.name;
+      a.cost += Number.isFinite(r.custo_real) ? r.custo_real : 0;
+      a.attr += Number.isFinite(r.taxa_atratividade) ? r.taxa_atratividade : 0;
+      a.eff += Number.isFinite(r.fator_eficiencia) ? r.fator_eficiencia : 0;
+      if ((!a.name || a.name === "Unknown") && r.host_name) a.name = String(r.host_name);
       map.set(key, a);
     }
     return Array.from(map.entries()).map(([host_id, v]) => ({
       host_id,
       host_name: v.name,
       listings: v.n,
-      avgCost: v.cost / v.n,
-      avgAttr: v.attr / v.n,
-      fator_eficiencia: v.eff / v.n,
+      avgCost: v.n > 0 ? v.cost / v.n : 0,
+      avgAttr: v.n > 0 ? v.attr / v.n : 0,
+      fator_eficiencia: v.n > 0 ? v.eff / v.n : 0,
     }));
   }, [filtered]);
 
