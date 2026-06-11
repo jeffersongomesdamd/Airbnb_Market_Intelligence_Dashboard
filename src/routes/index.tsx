@@ -8,7 +8,7 @@ import { PriceDistributionChart } from "@/components/dashboard/PriceDistribution
 import { NeighborhoodChart } from "@/components/dashboard/NeighborhoodChart";
 import { HostTable } from "@/components/dashboard/HostTable";
 import { DataError } from "@/components/dashboard/DataError";
-import { AIInsight } from "@/components/dashboard/AIInsight";
+import { AIInsights } from "@/components/dashboard/AIInsights";
 import {
   ChartSkeleton,
   MetricCardsSkeleton,
@@ -90,7 +90,7 @@ function DashboardBody() {
       </TabsList>
 
       <TabsContent value="overview" className="space-y-6">
-        <AIInsight />
+        <AIInsights />
         <MetricCards />
         <PriceDistributionChart />
       </TabsContent>
