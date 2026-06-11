@@ -57,7 +57,15 @@ export function NeighborhoodChart() {
                 fontSize: 12,
               }}
               formatter={(value: number, name: string) => {
-                if (name === "Avg Custo Real") return [`$${value.toFixed(0)}`, name];
+                if (name === "Avg Custo Real")
+                  return [
+                    new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                      maximumFractionDigits: 0,
+                    }).format(value),
+                    name,
+                  ];
                 if (name === "Avg Atratividade") return [value.toFixed(2), name];
                 return [value, name];
               }}

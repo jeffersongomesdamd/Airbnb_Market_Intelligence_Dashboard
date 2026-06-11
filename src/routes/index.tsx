@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AirbnbDataProvider, useAirbnb } from "@/lib/airbnb/context";
@@ -9,6 +8,11 @@ import { PriceDistributionChart } from "@/components/dashboard/PriceDistribution
 import { NeighborhoodChart } from "@/components/dashboard/NeighborhoodChart";
 import { HostTable } from "@/components/dashboard/HostTable";
 import { DataError } from "@/components/dashboard/DataError";
+import { AIInsight } from "@/components/dashboard/AIInsight";
+import {
+  ChartSkeleton,
+  MetricCardsSkeleton,
+} from "@/components/dashboard/DashboardSkeleton";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -57,9 +61,9 @@ function DashboardBody() {
 
   if (loading) {
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="text-sm">Loading cleaned_airbnb_data.csv…</span>
+      <div className="space-y-6">
+        <MetricCardsSkeleton />
+        <ChartSkeleton height={360} />
       </div>
     );
   }
@@ -86,6 +90,7 @@ function DashboardBody() {
       </TabsList>
 
       <TabsContent value="overview" className="space-y-6">
+        <AIInsight />
         <MetricCards />
         <PriceDistributionChart />
       </TabsContent>
