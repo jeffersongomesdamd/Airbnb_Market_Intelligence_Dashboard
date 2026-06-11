@@ -62,9 +62,9 @@ function DashboardBody() {
 
   if (loading) {
     return (
-      <div className="flex h-[60vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin" />
-        <span className="text-sm">Loading cleaned_airbnb_data.csv…</span>
+      <div className="space-y-6">
+        <MetricCardsSkeleton />
+        <ChartSkeleton height={360} />
       </div>
     );
   }
@@ -91,6 +91,7 @@ function DashboardBody() {
       </TabsList>
 
       <TabsContent value="overview" className="space-y-6">
+        <AIInsight />
         <MetricCards />
         <PriceDistributionChart />
       </TabsContent>
