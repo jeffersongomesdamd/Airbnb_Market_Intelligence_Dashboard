@@ -373,6 +373,10 @@ seções colapsadas no layout.
 
 ---
 
+## 11. Como estender
+
+
+
 
 
 - **Novo KPI**: adicione um item em `MetricCards.items` (calcule em `useMemo`
