@@ -10,21 +10,25 @@ const fmtUSD = (n: number) =>
 export function MetricCards() {
   const { filtered } = useAirbnb();
   const stats = useMemo(() => {
-    const n = filtered.length || 1;
+    const n = filtered.length;
+    if (n === 0) {
+      return { total: 0, avgCost: 0, avgEff: 0, avgRating: 0 };
+    }
     const sum = filtered.reduce(
       (a, r) => {
-        a.cost += r.custo_real;
-        a.eff += r.fator_eficiencia;
-        a.rating += r.review_scores_rating;
+        a.cost += Number.isFinite(r.custo_real) ? r.custo_real : 0;
+        a.eff += Number.isFinite(r.fator_eficiencia) ? r.fator_eficiencia : 0;
+        a.rating += Number.isFinite(r.review_scores_rating) ? r.review_scores_rating : 0;
         return a;
       },
       { cost: 0, eff: 0, rating: 0 },
     );
+    const safe = (v: number) => (Number.isFinite(v) ? v : 0);
     return {
-      total: filtered.length,
-      avgCost: sum.cost / n,
-      avgEff: sum.eff / n,
-      avgRating: sum.rating / n,
+      total: n,
+      avgCost: safe(sum.cost / n),
+      avgEff: safe(sum.eff / n),
+      avgRating: safe(sum.rating / n),
     };
   }, [filtered]);
 
