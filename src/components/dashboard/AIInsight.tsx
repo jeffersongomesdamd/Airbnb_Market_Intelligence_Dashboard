@@ -50,14 +50,15 @@ export function AIInsight() {
   }, [filtered]);
 
   return (
-    <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-chart-2/5">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-chart-2/10 blur-3xl" />
+    <Card className="relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/20 via-transparent to-pink-500/20" />
+      <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 opacity-30 blur-3xl" />
       <CardContent className="relative flex gap-4 p-5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 text-white shadow-lg shadow-fuchsia-500/40">
           <Sparkles className="h-5 w-5" />
         </div>
         <div className="space-y-1">
-          <div className="text-xs font-semibold uppercase tracking-wider text-primary/80">
+          <div className="bg-gradient-to-r from-violet-300 to-pink-300 bg-clip-text text-xs font-semibold uppercase tracking-[0.18em] text-transparent">
             Resumo da IA
           </div>
           <p className="text-sm leading-relaxed text-foreground/90">{insight}</p>

@@ -45,16 +45,41 @@ export function NeighborhoodChart() {
       <CardContent className="h-[420px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="group" tick={{ fontSize: 12, fill: "var(--muted-foreground)" }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} tickFormatter={(v) => `$${Math.round(v / 1000)}k`} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
+            <defs>
+              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ec4899" />
+                <stop offset="100%" stopColor="#8b5cf6" />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="2 6" stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <XAxis
+              dataKey="group"
+              tick={{ fontSize: 12, fill: "rgba(255,255,255,0.6)" }}
+              axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+              tickLine={false}
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fontSize: 11, fill: "rgba(255,255,255,0.55)" }}
+              tickFormatter={(v) => `$${Math.round(v / 1000)}k`}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tick={{ fontSize: 11, fill: "rgba(255,255,255,0.55)" }}
+              axisLine={false}
+              tickLine={false}
+            />
             <Tooltip
               contentStyle={{
-                background: "var(--popover)",
-                border: "1px solid var(--border)",
-                borderRadius: 8,
+                background: "rgba(20, 16, 40, 0.85)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 10,
                 fontSize: 12,
+                color: "white",
               }}
               formatter={(value: number, name: string) => {
                 if (name === "Avg Custo Real")
@@ -70,9 +95,9 @@ export function NeighborhoodChart() {
                 return [value, name];
               }}
             />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar yAxisId="left" dataKey="avgCost" name="Avg Custo Real" fill="var(--chart-1)" radius={[6, 6, 0, 0]} />
-            <Line yAxisId="right" type="monotone" dataKey="avgAttr" name="Avg Atratividade" stroke="var(--chart-4)" strokeWidth={3} dot={{ r: 4 }} />
+            <Legend wrapperStyle={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }} />
+            <Bar yAxisId="left" dataKey="avgCost" name="Avg Custo Real" fill="url(#barGrad)" radius={[8, 8, 0, 0]} />
+            <Line yAxisId="right" type="monotone" dataKey="avgAttr" name="Avg Atratividade" stroke="#22d3ee" strokeWidth={3} dot={{ r: 4, fill: "#22d3ee" }} />
           </ComposedChart>
         </ResponsiveContainer>
       </CardContent>
