@@ -12,7 +12,6 @@ import { AIInsight } from "@/components/dashboard/AIInsight";
 import {
   ChartSkeleton,
   MetricCardsSkeleton,
-  TableSkeleton,
 } from "@/components/dashboard/DashboardSkeleton";
 
 export const Route = createFileRoute("/")({
