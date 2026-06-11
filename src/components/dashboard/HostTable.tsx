@@ -63,9 +63,12 @@ export function HostTable() {
   const filteredSorted = useMemo(() => {
     const q = debouncedQuery.trim().toLowerCase();
     const arr = q
-      ? hosts.filter(
-          (h) => h.host_id.toLowerCase().includes(q) || h.host_name.toLowerCase().includes(q),
-        )
+      ? hosts.filter((h) => {
+          if (!h) return false;
+          const id = String(h.host_id ?? "").toLowerCase();
+          const name = String(h.host_name ?? "").toLowerCase();
+          return id.includes(q) || name.includes(q);
+        })
       : hosts;
     const sign = sortDir === "asc" ? 1 : -1;
     return [...arr].sort((a, b) => (a[sortKey] - b[sortKey]) * sign);
