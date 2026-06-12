@@ -77,3 +77,27 @@ Essas três métricas são a base para todos os gráficos, KPIs e insights da ap
 - **Prevenção de Crash:** Componentes de busca devem implementar `Error Boundaries` (ver `SectionErrorBoundary`) e checagens de existência (`optional chaining`, `String(...)` defensivo) para evitar acesso a propriedades de objetos `undefined`. A busca em `HostTable` coage `host_id` / `host_name` para string antes de qualquer `.toLowerCase()`.
 - **Monitoramento de Runtime:** Caso um valor numérico resulte em `NaN`, o sistema deve logar o `host_id` problemático com prefixo `[MODULE]` (ex: `[HostTable] NaN detectado para host_id=XYZ`) para facilitar o debug, ao invés de exibir `NaN` na UI — o fallback visível é sempre `0`.
 - **Observabilidade de parsing:** Erros não-fatais do `parseInChunks` são acumulados em `parseWarnings` no contexto e ficam disponíveis para surface na UI sem travar o boot do dashboard.
+
+## 8. Auditoria de Infraestrutura e Build
+
+### Otimizações de Bundle (`vite.config.ts`)
+
+- **Split-chunk strategy** via `build.rollupOptions.output.manualChunks` segregando o bundle por vendor cacheável:
+  - `vendor-react` — `react`, `react-dom`, `scheduler` (raramente muda → cache longo).
+  - `vendor-tanstack` — `@tanstack/*` (router + query, interdependentes).
+  - `vendor-charts` — `recharts` + internals `d3-*` / `victory-*` (~420 KB, isolado para não invalidar o resto).
+  - `vendor-radix` — primitives `@radix-ui/*` (mudam em conjunto).
+- **`chunkSizeWarningLimit: 500`** — bundle budget explícito; chunks acima de 500 KB acendem warning no build.
+- **`sourcemap: false`** — sourcemaps desativados em produção (menor superfície de exposição e build mais rápido).
+
+### Política de Tipos Estritos (Zero-Dead-Code Policy)
+
+- **`noUnusedLocals: true`** e **`noUnusedParameters: true`** no `tsconfig.json` — o compilador falha em qualquer variável/parâmetro morto, garantindo que dead code não chegue ao bundle.
+- **`strict: true`**, **`noFallthroughCasesInSwitch: true`** e **`noUncheckedSideEffectImports: true`** mantidos como baseline.
+- Script `type-check` (`tsc --noEmit`) disponível para validação local e CI.
+
+### Limpeza de Dependências
+
+- Pacotes de build (`@tailwindcss/vite`, `tailwindcss`, `vite-tsconfig-paths`) movidos para `devDependencies` — não pertencem ao grafo de runtime e seriam baixados em produção desnecessariamente.
+- Auditoria do grafo de imports `@radix-ui/*`: removidas 18 primitives não-utilizadas (accordion, dropdown-menu, popover, select, etc.), mantendo apenas as 8 ativamente usadas pelos componentes shadcn embarcados.
+- Pacotes UI órfãos removidos: `cmdk`, `vaul`, `embla-carousel-react`, `react-day-picker`, `react-resizable-panels`, `input-otp`, `sonner`, `react-hook-form`, `@hookform/resolvers`, `date-fns`, `papaparse`.
