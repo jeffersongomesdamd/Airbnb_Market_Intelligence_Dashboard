@@ -12,4 +12,42 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+
+  // ── Build optimization ─────────────────────────────────────────────────────
+  // Split-chunk strategy: isola vendors pesados (Recharts, TanStack, React) em
+  // chunks cacheáveis independentemente para performance máxima de cold-load.
+  vite: {
+    build: {
+      sourcemap: false,
+      chunkSizeWarningLimit: 500,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes("node_modules")) return;
+
+            if (
+              id.includes("node_modules/react/") ||
+              id.includes("node_modules/react-dom/") ||
+              id.includes("node_modules/scheduler/")
+            ) {
+              return "vendor-react";
+            }
+            if (id.includes("node_modules/@tanstack/")) {
+              return "vendor-tanstack";
+            }
+            if (
+              id.includes("node_modules/recharts") ||
+              id.includes("node_modules/d3-") ||
+              id.includes("node_modules/victory-")
+            ) {
+              return "vendor-charts";
+            }
+            if (id.includes("node_modules/@radix-ui/")) {
+              return "vendor-radix";
+            }
+          },
+        },
+      },
+    },
+  },
 });
