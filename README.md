@@ -1,5 +1,7 @@
 # Estate Intel — Airbnb Market Intelligence
 
+> ⚡ **Projeto otimizado com Zero-Dead-Code Policy e Build Split-Chunk para performance máxima.**
+
 Painel analítico de inteligência de mercado imobiliário baseado no dataset Airbnb Open Data. Construído com TanStack Start v1, React 19, Vite 7, Tailwind CSS v4, shadcn/ui e Recharts.
 
 ## Documentação
