@@ -8,7 +8,6 @@
 
 ![Estate Intel Dashboard](./public/data/dashboard-preview.png)
 
-> _Adicione um GIF/screenshot real em `public/data/dashboard-preview.png` após o primeiro deploy._
 
 ---
 
