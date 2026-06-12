@@ -19,11 +19,47 @@ Stack principal: **TanStack Start v1 + React 19 + Vite 7**, **Tailwind CSS v4 + 
 
 ## 3. Regras de Negócio e Métricas
 
-Pré-calculadas no pipeline Python e disponíveis em cada `AirbnbRow`:
+Pré-calculadas no pipeline Python e disponíveis em cada `AirbnbRow`. As fórmulas abaixo são o **contrato matemático** entre a camada de dados (Python) e a camada de visualização (TypeScript) — qualquer alteração exige atualização sincronizada em ambos os lados.
 
-- **Custo Real** (`custo_real`): `price + service_fee` (custo efetivo por noite após taxas).
-- **Taxa de Atratividade** (`taxa_atratividade`): métrica ponderada combinando **60% rating normalizado** e **40% volume de reviews normalizado**, com saída no intervalo `[0, 1]`.
-- **Fator de Eficiência** (`fator_eficiencia`): `availability_365 / minimum_nights`, com guarda contra divisão por zero (`max(minimum_nights, 1)`).
+### 3.1 Custo Real (`custo_real`)
+
+Custo efetivo por noite, somando taxa de serviço ao preço base:
+
+```
+custo_real = price + service_fee
+```
+
+- **Unidade:** USD
+- **Domínio:** `[0, +∞)`
+- **Fallback:** se `price` ou `service_fee` forem nulos/`NaN`, são coagidos a `0` no `parse.ts`.
+
+### 3.2 Taxa de Atratividade (`taxa_atratividade`)
+
+Score composto que pondera qualidade percebida (rating) e prova social (volume de reviews), normalizados ao intervalo `[0, 1]` via min-max no dataset completo:
+
+```
+rating_norm  = (review_scores_rating - min_rating)  / (max_rating  - min_rating)
+reviews_norm = (number_of_reviews    - min_reviews) / (max_reviews - min_reviews)
+
+taxa_atratividade = 0.6 * rating_norm + 0.4 * reviews_norm
+```
+
+- **Pesos:** `0.6` para rating (sinal de qualidade direta) e `0.4` para volume (sinal de tração de mercado). A ponderação prioriza qualidade sobre quantidade, evitando que listings com muitos reviews medíocres dominem o ranking.
+- **Domínio:** `[0, 1]`
+- **Guarda numérica:** denominadores `(max - min)` são protegidos contra zero (caso de dataset homogêneo) retornando `0` quando o spread é nulo.
+
+### 3.3 Fator de Eficiência (`fator_eficiencia`)
+
+Capacidade teórica de noites bookáveis por ano, ajustada pela política mínima de estadia:
+
+```
+fator_eficiencia = availability_365 / max(minimum_nights, 1)
+```
+
+- **Interpretação:** quantas "janelas de reserva" o anfitrião oferece ao mercado por ano. Quanto maior, mais flexível e teoricamente mais rentável.
+- **Domínio:** `[0, 365]`
+- **Guarda contra divisão por zero:** `max(minimum_nights, 1)` evita `Infinity` quando o campo vem zerado.
+- **Validação na UI:** `MetricCards` aplica `Number.isFinite(r.fator_eficiencia) ? r.fator_eficiencia : 0` antes de agregar.
 
 Essas três métricas são a base para todos os gráficos, KPIs e insights da aplicação.
 
